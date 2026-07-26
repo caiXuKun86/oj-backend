@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kun.oj.mapper.QuestionBaseMapper">
+
+    <select id="selectQuestionPage" resultType="com.kun.oj.model.entity.QuestionBase">
+        SELECT id, title,`number`, difficulty, submitNum, acceptedNum,timeLimit,memoryLimit from question_base
+        <where>
+            <if test="query.number != null and query.number != ''">
+                AND `number` = #{query.number}
+            </if>
+            <if test="query.title != null and query.title != ''">
+                AND title LIKE CONCAT('%', #{query.title}, '%')
+            </if>
+
+            <if test="query.difficulty != null and query.difficulty != ''">
+                AND difficulty = #{query.difficulty}
+            </if>
+
+            <if test="query.tagIds != null and query.tagIds.size() > 0">
+                AND id IN (
+                SELECT questionId
+                FROM question_tag_related
+                WHERE questionTagId IN
+                <foreach collection="query.tagIds" item="tagId" open="(" separator="," close=")">
+                    #{tagId}
+                </foreach>
+                GROUP BY questionId
+                HAVING COUNT(DISTINCT questionTagId) =#{query.tagIdsSize}
+                )
+            </if>
+            <if test="true">
+                AND isDelete = 0
+            </if>
+        </where>
+        ORDER BY id ASC
+    </select>
+
+
+</mapper>
+
+

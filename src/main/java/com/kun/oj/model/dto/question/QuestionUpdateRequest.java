@@ -1,0 +1,65 @@
+package com.kun.oj.model.dto.question;
+
+import lombok.Data;
+
+import java.io.Serializable;
+import java.util.List;
+
+/**
+ * 更新请求
+ *
+ * @author <a href="https://github.com/liyupi">程序员鱼皮</a>
+ * @from <a href="https://yupi.icu">编程导航知识星球</a>
+ */
+@Data
+public class QuestionUpdateRequest implements Serializable {
+
+    /**
+     * id
+     */
+    private Long id;
+    /**
+     * 编号
+     */
+    private String number;
+    /**
+     * 标题
+     */
+    private String title;
+
+    /**
+     * 内容
+     */
+    private String content;
+    /**
+     * 难度
+     */
+    private String difficulty;
+
+    /**
+     * 标签列表（json 数组）
+     */
+    private List<Long> tagIds;
+
+
+    /**
+     * 判题用例（json 数组）
+     */
+    private List<SampleJudgeCase> sampleJudgeCaseList;
+
+    /**
+     * 判题用例（json 数组）
+     */
+    private HiddenJudgeCase hiddenJudgeCase;
+    /**
+     * 时间限制
+     */
+    private Integer timeLimit;
+    /**
+     * 空间限制
+     */
+    private Integer memoryLimit;
+
+
+    private static final long serialVersionUID = 1L;
+}

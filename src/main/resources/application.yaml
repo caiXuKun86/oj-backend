@@ -1,0 +1,38 @@
+spring:
+  application:
+    name: oj-backend
+  profiles:
+    active: prod
+  mvc:
+    pathmatch:
+      matching-strategy: ant_path_matcher
+  session:
+    store-type: redis
+    timeout: 2592000
+  servlet:
+    multipart:
+      max-file-size: 10MB
+
+server:
+  address: 0.0.0.0
+  port: 8080
+  servlet:
+    context-path: /api
+    session:
+      cookie:
+        max-age: 2592000
+        path: /api
+
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: false
+  global-config:
+    db-config:
+      logic-delete-field: isDelete
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+
+knife4j:
+  enable: true
+
+
