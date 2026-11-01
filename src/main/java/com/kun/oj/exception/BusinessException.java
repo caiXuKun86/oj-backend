@@ -1,7 +1,8 @@
 package com.kun.oj.exception;
 
 
-import com.kun.oj.common.ErrorCode;
+import com.kun.oj.common.ResultCode;
+import lombok.Getter;
 
 /**
  * 自定义异常类
@@ -9,6 +10,7 @@ import com.kun.oj.common.ErrorCode;
  * @author <a href="https://github.com/liyupi">程序员鱼皮</a>
  * @from <a href="https://yupi.icu">编程导航知识星球</a>
  */
+@Getter
 public class BusinessException extends RuntimeException {
 
     /**
@@ -20,18 +22,15 @@ public class BusinessException extends RuntimeException {
         this.code = code;
     }
 
-    public BusinessException(ErrorCode errorCode) {
-        super(errorCode.getMessage());
-        this.code = errorCode.getCode();
+    public BusinessException(ResultCode resultCode) {
+        super(resultCode.getMessage());
+        this.code = resultCode.getCode();
     }
 
-    public BusinessException(ErrorCode errorCode, String message) {
+    public BusinessException(ResultCode resultCode, String message) {
         super(message);
-        this.code = errorCode.getCode();
+        this.code = resultCode.getCode();
     }
 
-    public int getCode() {
-        return code;
-    }
 }
 

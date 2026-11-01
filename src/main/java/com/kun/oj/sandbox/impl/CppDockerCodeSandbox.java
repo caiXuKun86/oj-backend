@@ -21,9 +21,14 @@ public class CppDockerCodeSandbox extends AbstractCodeSandboxTemplate {
     @Override
     public String[] getCompileCommand() {
         return new String[]{
-                "g++", "-fmax-errors=3", "-O2", "-std=c++14", "main.cpp", "-o", "Main"
+                "g++", "-fmax-errors=3", "-O2", "-std=c++14", "main.cpp", "-o", "main"
         };
 
+    }
+
+    @Override
+    public String getRunCommand() {
+        return "/app/code/main";
     }
 
 }

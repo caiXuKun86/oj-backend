@@ -26,4 +26,9 @@ public class JavaDockerCodeSandbox extends AbstractCodeSandboxTemplate {
         };
     }
 
+    @Override
+    public String getRunCommand() {
+        return "java -Dfile.encoding=UTF-8 -cp /app/code Main";
+    }
+
 }

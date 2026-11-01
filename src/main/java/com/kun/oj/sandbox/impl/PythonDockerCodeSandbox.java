@@ -24,4 +24,9 @@ public class PythonDockerCodeSandbox extends AbstractCodeSandboxTemplate {
     public String[] getCompileCommand() {
         return new String[0];
     }
+
+    @Override
+    public String getRunCommand() {
+        return "python3 /app/code/main.py";
+    }
 }

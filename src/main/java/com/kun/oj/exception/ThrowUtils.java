@@ -1,7 +1,7 @@
 package com.kun.oj.exception;
 
 
-import com.kun.oj.common.ErrorCode;
+import com.kun.oj.common.ResultCode;
 
 /**
  * 抛异常工具类
@@ -27,21 +27,21 @@ public class ThrowUtils {
      * 条件成立则抛异常
      *
      * @param condition
-     * @param errorCode
+     * @param resultCode
      */
-    public static void throwIf(boolean condition, ErrorCode errorCode) {
-        throwIf(condition, new BusinessException(errorCode));
+    public static void throwIf(boolean condition, ResultCode resultCode) {
+        throwIf(condition, new BusinessException(resultCode));
     }
 
     /**
      * 条件成立则抛异常
      *
      * @param condition
-     * @param errorCode
+     * @param resultCode
      * @param message
      */
-    public static void throwIf(boolean condition, ErrorCode errorCode, String message) {
-        throwIf(condition, new BusinessException(errorCode, message));
+    public static void throwIf(boolean condition, ResultCode resultCode, String message) {
+        throwIf(condition, new BusinessException(resultCode, message));
     }
 }
 

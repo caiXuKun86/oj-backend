@@ -60,7 +60,7 @@ public class DockerImageInitConfig implements ApplicationRunner {
         } catch (Exception e) {
             System.out.println("未找到 Python 沙箱镜像，正在从远端拉取（这可能需要几分钟）...");
             try {
-                dockerClient.pullImageCmd(CPP_IMAGE)
+                dockerClient.pullImageCmd(PYTHON_IMAGE)
                         .start()
                         .awaitCompletion(); // 阻塞等待直到拉取成功
                 System.out.println("Python 沙箱镜像拉取成功！");

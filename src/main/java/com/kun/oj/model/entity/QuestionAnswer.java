@@ -5,7 +5,7 @@ import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 
 /**
  * 题目答案
@@ -17,7 +17,7 @@ public class QuestionAnswer {
     /**
      * id
      */
-    @TableId(type = IdType.ASSIGN_ID)
+    @TableId(type = IdType.AUTO)
     private Long id;
 
     /**
@@ -26,48 +26,22 @@ public class QuestionAnswer {
     private Long questionId;
 
     /**
-     * 提交用户 id
-     */
-    private Long userId;
-
-    /**
      * 编程语言
      */
     private String language;
 
     /**
-
-  * 答案内容
+     * 答案内容
      */
     private String content;
-    /**
-     * 状态：0-待审皮 1-通过, 2-拒绝
-     */
-    private Integer reviewStatus;
-
-    /**
-     * 审核信息（如拒绝原因皮     */
-    private String reviewMessage;
-
-    /**
-     * 审核皮id
-     */
-    private Long reviewerId;
 
     /**
      * 创建时间
      */
-    private Date createTime;
+    private LocalDateTime createTime;
 
     /**
      * 更新时间
      */
-    private Date updateTime;
-
-    /**
-     * 是否删除
-     */
-    private Integer isDelete;
-
-
+    private LocalDateTime updateTime;
 }

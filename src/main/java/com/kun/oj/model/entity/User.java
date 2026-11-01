@@ -1,67 +1,52 @@
 package com.kun.oj.model.entity;
 
-import com.baomidou.mybatisplus.annotation.*;
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
-import java.io.Serializable;
-import java.util.Date;
+import java.time.LocalDateTime;
 
 /**
  * 用户
- *
- * @author <a href="https://github.com/liyupi">程序员鱼皮</a>
- * @from <a href="https://yupi.icu">编程导航知识星球</a>
+ * @TableName user
  */
-@TableName(value = "user")
+@TableName(value ="user")
 @Data
-public class User implements Serializable {
-
+public class User {
     /**
      * id
      */
-    @TableId(type = IdType.ASSIGN_ID)
+    @TableId(type = IdType.AUTO)
     private Long id;
 
     /**
-     * 用户账号
+     * 用户名
      */
-    private String userAccount;
+    private String username;
 
     /**
-     * 用户密码
+     * 密码
      */
-    private String userPassword;
-
-
+    private String password;
 
     /**
      * 用户昵称
      */
-    private String userName;
-
-
+    private String nickname;
 
     /**
      * 用户角色：user/admin/ban
      */
-    private String userRole;
+    private String role;
 
     /**
      * 创建时间
      */
-    private Date createTime;
+    private LocalDateTime createTime;
 
     /**
      * 更新时间
      */
-    private Date updateTime;
-
-    /**
-     * 是否删除
-     */
-    @TableLogic
-    private Integer isDelete;
-
-    @TableField(exist = false)
-    private static final long serialVersionUID = 1L;
+    private LocalDateTime updateTime;
 }

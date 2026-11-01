@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kun.oj.mapper.QuestionMapper">
+
+
+    <select id="searchQuestionByScore" resultType="com.kun.oj.model.entity.Question">
+        SELECT
+        id, number, title, content, tags, difficulty,
+        time_limit, memory_limit, judge_case_sample, judge_case_url,
+        submit_num, accepted_num, create_time, update_time,
+        <!-- 核心：计算匹配得分 -->
+        (
+        (CASE
+        WHEN number = #{keyword} THEN 100
+        WHEN number LIKE CONCAT('%', #{keyword}, '%') THEN 60
+        ELSE 0
+        END) +
+        (CASE WHEN title LIKE CONCAT('%', #{keyword}, '%') THEN 50 ELSE 0 END) +
+        (CASE WHEN tags LIKE CONCAT('%', #{keyword}, '%') THEN 20 ELSE 0 END) +
+        (CASE WHEN content LIKE CONCAT('%', #{keyword}, '%') THEN 10 ELSE 0 END)
+        ) AS search_score
+        FROM question
+        WHERE number LIKE CONCAT('%', #{keyword}, '%')
+        OR title LIKE CONCAT('%', #{keyword}, '%')
+        OR tags LIKE CONCAT('%', #{keyword}, '%')
+        OR content LIKE CONCAT('%', #{keyword}, '%')
+        <!-- 优先按匹配分数降序，分数相同时按创建时间降序 -->
+        ORDER BY search_score DESC, create_time DESC
+    </select>
+</mapper>
