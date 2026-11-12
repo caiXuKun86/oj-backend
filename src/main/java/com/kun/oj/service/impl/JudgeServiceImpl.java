@@ -161,7 +161,7 @@ public class JudgeServiceImpl implements JudgeService {
             throw new BusinessException(ResultCode.SYSTEM_ERROR, "判题状态更新失败");
         }
         questionMapper.update(null, Wrappers.<Question>lambdaUpdate()
-                .setSql("submitNum = submitNum + 1")
+                .setSql("submit_num = submit_num  + 1")
                 .eq(Question::getId, questionId));
 
 
@@ -261,7 +261,7 @@ public class JudgeServiceImpl implements JudgeService {
                 if (finalMessage.equals(JudgeMessageEnum.ACCEPTED.getCode())) {
                     //更新通过数
                     questionMapper.update(null, Wrappers.<Question>lambdaUpdate()
-                            .setSql("acceptedNum = acceptedNum + 1")
+                            .setSql("accepted_num = accepted_num + 1")
                             .eq(Question::getId, questionId));
                 }
 

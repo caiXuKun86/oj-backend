@@ -1,10 +1,8 @@
 package com.kun.oj.controller.user;
 
-import com.kun.oj.annotation.AuthCheck;
 import com.kun.oj.common.PageResult;
 import com.kun.oj.common.Result;
 import com.kun.oj.common.ResultUtils;
-import com.kun.oj.constant.UserConstant;
 import com.kun.oj.model.dto.request.QuestionPageRequest;
 import com.kun.oj.model.dto.request.QuestionSearchRequest;
 import com.kun.oj.model.dto.request.QuestionSubmitRequest;
@@ -38,7 +36,7 @@ public class UserQuestionController {
      * @return
      */
     @GetMapping("/list")
-    public Result<PageResult<QuestionPageVO>> queryQuestionPage(@RequestBody QuestionPageRequest questionPageRequest) {
+    public Result<PageResult<QuestionPageVO>> queryQuestionPage(QuestionPageRequest questionPageRequest) {
         PageResult<QuestionPageVO> result = questionService.queryQuestionPage(questionPageRequest);
         return ResultUtils.success(result);
     }
@@ -50,7 +48,7 @@ public class UserQuestionController {
      * @return
      */
     @GetMapping("/search")
-    public Result<PageResult<QuestionPageVO>> searchQuestionPage(@RequestBody QuestionSearchRequest questionSearchRequest) {
+    public Result<PageResult<QuestionPageVO>> searchQuestionPage(QuestionSearchRequest questionSearchRequest) {
         PageResult<QuestionPageVO> result = questionService.searchQuestionPage(questionSearchRequest);
         return ResultUtils.success(result);
     }
@@ -71,7 +69,6 @@ public class UserQuestionController {
 
 
     @PostMapping("/submit")
-    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     public Result<Long> submitQuestion(@RequestBody QuestionSubmitRequest questionSubmitRequest) {
         Long result = questionService.submitQuestion(questionSubmitRequest);
         return ResultUtils.success(result);

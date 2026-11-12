@@ -72,12 +72,12 @@ public class AdminQuestionServiceImpl extends ServiceImpl<QuestionMapper, Questi
                 .eq(id != null, Question::getId, id)
                 .eq(StrUtil.isNotBlank(difficulty), Question::getDifficulty, difficulty)
                 .like(StrUtil.isNotBlank(number), Question::getNumber, number)
-                .like(StrUtil.isNotBlank(title), Question::getDifficulty, title)
+                .like(StrUtil.isNotBlank(title), Question::getTitle, title)
                 .like(StrUtil.isNotBlank(tag), Question::getTags, tag);
 
 
         if (StrUtil.isBlank(pageRequest.getSortField())) {
-            queryWrapper.orderBy(true, pageRequest.getIsAsc(), Question::getCreateTime);
+            queryWrapper.orderByAsc(true, Question::getCreateTime);
         }
 
         Page<Question> questionPage = this.page(pageRequest.toPage(), queryWrapper);
@@ -106,6 +106,11 @@ public class AdminQuestionServiceImpl extends ServiceImpl<QuestionMapper, Questi
 
     @Override
     public JudgeCaseUploadResponse uploadTestCases(MultipartFile multipartFile, Long questionId) {
+        Question oldQuestion = this.getById(questionId);
+        if (oldQuestion == null) {
+            throw new BusinessException(ResultCode.NOT_FOUND_ERROR, "题目不存在");
+        }
+
         // 定义全局基础路径
         String globalPath = judgeCaseUploadPath + File.separator + questionId;
 
@@ -168,14 +173,41 @@ public class AdminQuestionServiceImpl extends ServiceImpl<QuestionMapper, Questi
                 }
             }
 
-            // 3. 上传到 COS
+            // 3. 上传到 OSS
             String key = "judgeCase/" + questionId + "/" + zipFileName;
-
             PutObjectResult putObjectResult = ossTemplate.uploadFile(key, zipFile);
 
+            int caseCount = files.size() / 2;
+            String version = putObjectResult.getETag();
 
-            // 返回 COS Key 和用例组数
-            return new JudgeCaseUploadResponse(key, files.size() / 2, putObjectResult.getETag());
+            // 4. 直接更新题目数据库记录
+            Question updateQuestion = new Question();
+            updateQuestion.setId(questionId);
+            updateQuestion.setJudgeCaseKey(key);
+            updateQuestion.setJudgeCaseCount(caseCount);
+            updateQuestion.setJudgeCaseVersion(version);
+
+            boolean updated = this.updateById(updateQuestion);
+            if (!updated) {
+                throw new BusinessException(ResultCode.OPERATION_ERROR, "更新题目用例到数据库失败");
+            }
+
+            // 5. 若此前有旧的测试用例文件且 key 不同，清理 OSS 上的旧文件
+            String oldKey = oldQuestion.getJudgeCaseKey();
+            if (StrUtil.isNotBlank(oldKey) && !oldKey.equals(key)) {
+                try {
+                    ossTemplate.deleteFile(oldKey);
+                } catch (Exception e) {
+                    log.error("旧的测试用例删除失败: oldKey={}, err={}", oldKey, e.getMessage());
+                }
+            }
+
+            // 6. 清理 Redis 缓存
+            String redisKey = String.format(RedisConstants.CACHE_QUESTION_INFO, questionId);
+            stringRedisTemplate.delete(redisKey);
+
+            // 返回 OSS Key、用例组数和版本号
+            return new JudgeCaseUploadResponse(key, caseCount, version);
 
         } catch (BusinessException e) {
             // BusinessException 直接往外抛，保留原有的错误信息提示给前端
@@ -185,38 +217,47 @@ public class AdminQuestionServiceImpl extends ServiceImpl<QuestionMapper, Questi
             throw new BusinessException(ResultCode.OPERATION_ERROR, "处理失败");
 
         } finally {
-            // 4. 清理临时文件 (兜底策略，放在 finally 中确保一定执行)
+            // 7. 清理临时文件 (兜底策略，放在 finally 中确保一定执行)
             FileUtil.del(globalPath);
         }
     }
 
     @Override
     public boolean updateQuestion(QuestionUpdateRequest questionUpdateRequest, Long questionId) {
-        String judgeCaseKey = questionUpdateRequest.getJudgeCaseKey();
-
-
         Question oldQuestion = this.getById(questionId);
         if (oldQuestion == null) {
             throw new BusinessException(ResultCode.NOT_FOUND_ERROR, "题目不存在");
         }
+
         Question question = BeanUtil.copyProperties(questionUpdateRequest, Question.class);
         question.setId(questionId);
+
+        // 如果更新请求未传 judgeCase 字段，则保留原题目的测试用例信息，防止被覆盖为空
+        String judgeCaseKey = questionUpdateRequest.getJudgeCaseKey();
+        if (StrUtil.isBlank(judgeCaseKey)) {
+            question.setJudgeCaseKey(oldQuestion.getJudgeCaseKey());
+            question.setJudgeCaseCount(oldQuestion.getJudgeCaseCount());
+            question.setJudgeCaseVersion(oldQuestion.getJudgeCaseVersion());
+        }
+
         boolean b = this.updateById(question);
         if (!b) {
-            throw new BusinessException(ResultCode.OPERATION_ERROR);
+            throw new BusinessException(ResultCode.OPERATION_ERROR, "更新题目失败");
         }
-        if (!oldQuestion.getJudgeCaseKey().equals(judgeCaseKey)) {
+
+        // 仅在显式传入新的 judgeCaseKey 且与旧的 key 不同时，才清理 OSS 上的旧文件
+        if (StrUtil.isNotBlank(judgeCaseKey) && StrUtil.isNotBlank(oldQuestion.getJudgeCaseKey())
+                && !judgeCaseKey.equals(oldQuestion.getJudgeCaseKey())) {
             try {
                 ossTemplate.deleteFile(oldQuestion.getJudgeCaseKey());
             } catch (Exception e) {
-                log.error("旧的测试用例删除失败{}", oldQuestion.getJudgeCaseCount());
+                log.error("旧的测试用例删除失败: {}", e.getMessage());
             }
         }
+
         String redisKey = String.format(RedisConstants.CACHE_QUESTION_INFO, questionId);
         stringRedisTemplate.delete(redisKey);
         return true;
-
-
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -227,12 +268,19 @@ public class AdminQuestionServiceImpl extends ServiceImpl<QuestionMapper, Questi
             throw new BusinessException(ResultCode.NOT_FOUND_ERROR, "题目不存在");
         }
         boolean b = this.removeById(questionId);
-        if(!b){
-            throw new BusinessException(ResultCode.OPERATION_ERROR);
+        if (!b) {
+            throw new BusinessException(ResultCode.OPERATION_ERROR, "删除题目失败");
         }
-        ossTemplate.deleteFile(oldQuestion.getJudgeCaseKey());
+        if (StrUtil.isNotBlank(oldQuestion.getJudgeCaseKey())) {
+            try {
+                ossTemplate.deleteFile(oldQuestion.getJudgeCaseKey());
+            } catch (Exception e) {
+                log.error("旧的测试用例删除失败: {}", e.getMessage());
+            }
+        }
+        String redisKey = String.format(RedisConstants.CACHE_QUESTION_INFO, questionId);
+        stringRedisTemplate.delete(redisKey);
         return true;
-
     }
 
 }

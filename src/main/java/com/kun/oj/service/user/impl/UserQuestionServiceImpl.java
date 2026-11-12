@@ -37,8 +37,6 @@ import org.redisson.api.RedissonClient;
 import org.springframework.beans.BeanUtils;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.support.TransactionSynchronization;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -82,19 +80,23 @@ public class UserQuestionServiceImpl extends ServiceImpl<QuestionMapper, Questio
 
         if (isAccept != null) {
             if (userId == null) {
-                queryWrapper.apply("1=2");
-            }
-            String existsSql = String.format("select 1 from user_question_accepted uqa where uqa.question_id = question.id and uqa.user_id = %d", userId);
-            if (isAccept) {
-                // 已通过：EXISTS
-                queryWrapper.exists(existsSql);
+                // 未登录用户：若筛选已通过则无结果，若筛选未通过则无需过滤全部展示
+                if (Boolean.TRUE.equals(isAccept)) {
+                    queryWrapper.apply("1=2");
+                }
             } else {
-                // 未通过：NOT EXISTS
-                queryWrapper.notExists(existsSql);
+                String existsSql = String.format("select 1 from user_question_accepted uqa where uqa.question_id = question.id and uqa.user_id = %d", userId);
+                if (isAccept) {
+                    // 已通过：EXISTS
+                    queryWrapper.exists(existsSql);
+                } else {
+                    // 未通过：NOT EXISTS
+                    queryWrapper.notExists(existsSql);
+                }
             }
         }
         if (StrUtil.isBlank(pageRequest.getSortField())) {
-            queryWrapper.orderBy(true, pageRequest.getIsAsc(), Question::getCreateTime);
+            queryWrapper.orderByAsc(true, Question::getCreateTime);
         }
 
         Page<Question> questionPage = this.page(pageRequest.toPage(), queryWrapper);
@@ -104,11 +106,13 @@ public class UserQuestionServiceImpl extends ServiceImpl<QuestionMapper, Questio
         }
         List<Long> questionIds = records.stream().map(Question::getId).collect(Collectors.toList());
 
-        Set<Long> acceptSet = acceptedMapper.selectObjs(new LambdaQueryWrapper<UserQuestionAccepted>()
-                        .select(UserQuestionAccepted::getQuestionId)
-                        .eq(UserQuestionAccepted::getUserId, userId)
-                        .in(UserQuestionAccepted::getQuestionId, questionIds))
-                .stream().map(obj -> (Long) obj).collect(Collectors.toSet());
+        final Set<Long> acceptSet = (userId != null && CollUtil.isNotEmpty(questionIds))
+                ? acceptedMapper.selectObjs(new LambdaQueryWrapper<UserQuestionAccepted>()
+                                .select(UserQuestionAccepted::getQuestionId)
+                                .eq(UserQuestionAccepted::getUserId, userId)
+                                .in(UserQuestionAccepted::getQuestionId, questionIds))
+                        .stream().map(obj -> (Long) obj).collect(Collectors.toSet())
+                : Collections.emptySet();
 
         List<QuestionPageVO> voList = records.stream().map(q -> {
             QuestionPageVO vo = new QuestionPageVO();
@@ -154,11 +158,13 @@ public class UserQuestionServiceImpl extends ServiceImpl<QuestionMapper, Questio
         }
         List<Long> questionIds = records.stream().map(Question::getId).collect(Collectors.toList());
 
-        Set<Long> acceptSet = acceptedMapper.selectObjs(new LambdaQueryWrapper<UserQuestionAccepted>()
-                        .select(UserQuestionAccepted::getQuestionId)
-                        .eq(UserQuestionAccepted::getUserId, userId)
-                        .in(UserQuestionAccepted::getQuestionId, questionIds))
-                .stream().map(obj -> (Long) obj).collect(Collectors.toSet());
+        final Set<Long> acceptSet = (userId != null && CollUtil.isNotEmpty(questionIds))
+                ? acceptedMapper.selectObjs(new LambdaQueryWrapper<UserQuestionAccepted>()
+                                .select(UserQuestionAccepted::getQuestionId)
+                                .eq(UserQuestionAccepted::getUserId, userId)
+                                .in(UserQuestionAccepted::getQuestionId, questionIds))
+                        .stream().map(obj -> (Long) obj).collect(Collectors.toSet())
+                : Collections.emptySet();
 
         List<QuestionPageVO> voList = records.stream().map(q -> {
             QuestionPageVO vo = new QuestionPageVO();
@@ -285,15 +291,9 @@ public class UserQuestionServiceImpl extends ServiceImpl<QuestionMapper, Questio
             int result = submitMapper.insert(questionSubmit);
             ThrowUtils.throwIf(result < 0, ResultCode.OPERATION_ERROR, "提交失败");
             Long submitId = questionSubmit.getId();
-            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-                @Override
-                public void afterCommit() {
-                    // 事务已百分之百落库，进入线程池异步执行！
-                    CompletableFuture.runAsync(() -> {
-                        judgeService.doJudge(submitId);
-                    }, judgeExecutor);
-                }
-            });
+            CompletableFuture.runAsync(() -> {
+                judgeService.doJudge(submitId);
+            }, judgeExecutor);
             return submitId;
         } finally {
             if (lock.isHeldByCurrentThread()) {

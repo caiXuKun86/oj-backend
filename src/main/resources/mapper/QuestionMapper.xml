@@ -8,7 +8,7 @@
     <select id="searchQuestionByScore" resultType="com.kun.oj.model.entity.Question">
         SELECT
         id, number, title, content, tags, difficulty,
-        time_limit, memory_limit, judge_case_sample, judge_case_url,
+        time_limit, memory_limit, judge_case_sample, judge_case_key,
         submit_num, accepted_num, create_time, update_time,
         <!-- 核心：计算匹配得分 -->
         (

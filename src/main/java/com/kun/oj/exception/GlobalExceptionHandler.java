@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 /**
  * 全局异常处理器 *
+ *
  * @author <a href="https://github.com/liyupi">程序员鱼皮</a>
  * @from <a href="https://yupi.icu">编程导航知识星球</a>
  */
@@ -17,11 +18,15 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(BusinessException.class)
     public Result<?> businessExceptionHandler(BusinessException e) {
+        e.printStackTrace();
         return ResultUtils.fail(e.getCode(), e.getMessage());
     }
 
     @ExceptionHandler(RuntimeException.class)
     public Result<?> runtimeExceptionHandler(RuntimeException e) {
+        e.printStackTrace();
+
+
         return ResultUtils.fail(ResultCode.SYSTEM_ERROR);
     }
 }

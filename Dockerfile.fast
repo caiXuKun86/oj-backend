@@ -1,0 +1,34 @@
+# ==========================================
+# 本地已构建好 target/*.jar 时的极速打包 Dockerfile
+# 使用命令: docker build -f Dockerfile.fast -t oj-backend .
+# ==========================================
+FROM eclipse-temurin:8-jre-alpine
+
+LABEL maintainer="Kun OJ Team"
+LABEL description="Kun Online Judge Backend Service (Fast Build)"
+
+# 设置时区
+ENV TZ=Asia/Shanghai
+RUN apk add --no-cache tzdata && \
+    cp /usr/share/zoneinfo/$TZ /etc/localtime && \
+    echo $TZ > /etc/timezone && \
+    apk del tzdata
+
+# 创建评测目录
+RUN mkdir -p /app \
+             /tmp/oj/upload_testcase \
+             /tmp/oj/code \
+             /var/lib/oj/testcase \
+             /tmp/oj/result
+
+WORKDIR /app
+
+# 直接复制本地已打好的 jar 包
+COPY target/oj-backend-*.jar /app/app.jar
+
+EXPOSE 8080
+
+ENV JAVA_OPTS="-Xms256m -Xmx512m -XX:+UseG1GC -Dfile.encoding=UTF-8"
+ENV SPRING_PROFILES_ACTIVE="prod"
+
+ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar /app/app.jar --spring.profiles.active=$SPRING_PROFILES_ACTIVE"]

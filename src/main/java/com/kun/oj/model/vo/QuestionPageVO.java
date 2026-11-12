@@ -47,10 +47,15 @@ public class QuestionPageVO {
      * 通过率
      */
     private BigDecimal passRate;
+
     /**
      * 是否通过
      */
     private Boolean isAccept;
 
+    /**
+     * 判题用例 数量
+     */
+    private Integer judgeCaseCount;
 
 }

@@ -12,9 +12,9 @@ import lombok.Getter;
 @Getter
 public enum QuestionDifficultyEnum {
 
-    EASY("easy", "简单"),
-    MIDDLE("middle", "中等"),
-    HARD("hard", "困难");
+    EASY("Easy", "简单"),
+    MIDDLE("Medium", "中等"),
+    HARD("Hard", "困难");
 
 
     /**

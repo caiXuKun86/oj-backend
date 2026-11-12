@@ -1,30 +1,37 @@
 package com.kun.oj.config;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
+import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateDeserializer;
+import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
+import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateSerializer;
+import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
 import org.springframework.boot.autoconfigure.jackson.Jackson2ObjectMapperBuilderCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import java.time.format.DateTimeFormatter;
+
 @Configuration
 public class JacksonConfig {
+
+    private static final String DATE_TIME_FORMAT = "yyyy-MM-dd HH:mm:ss";
+    private static final String DATE_FORMAT = "yyyy-MM-dd";
+
     @Bean
     public Jackson2ObjectMapperBuilderCustomizer jackson2ObjectMapperBuilderCustomizer() {
-        return jacksonObjectMapperBuilder -> {
-            // 将 Long 和 long 在 JSON 序列化时自动转为 String 字符串输皮            jacksonObjectMapperBuilder.serializerByType(Long.class, ToStringSerializer.instance);
-            jacksonObjectMapperBuilder.serializerByType(Long.TYPE, ToStringSerializer.instance);
+        return builder -> {
+            // 1. Long 转 String，防止前端 JS 丢失 64 位大整数精度
+            builder.serializerByType(Long.class, ToStringSerializer.instance);
+            builder.serializerByType(Long.TYPE, ToStringSerializer.instance);
+
+            // 2. 全局配置 LocalDateTime / LocalDate 序列化与反序列化格式
+            DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(DATE_TIME_FORMAT);
+            builder.serializers(new LocalDateTimeSerializer(dateTimeFormatter));
+            builder.deserializers(new LocalDateTimeDeserializer(dateTimeFormatter));
+
+            DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern(DATE_FORMAT);
+            builder.serializers(new LocalDateSerializer(dateFormatter));
+            builder.deserializers(new LocalDateDeserializer(dateFormatter));
         };
     }
-    @Bean
-    public ObjectMapper objectMapper() {
-        ObjectMapper objectMapper = new ObjectMapper();
-        SimpleModule simpleModule = new SimpleModule();
-        // 将所有的 Long 类型统一序列化为 String
-        simpleModule.addSerializer(Long.class, ToStringSerializer.instance);
-        simpleModule.addSerializer(Long.TYPE, ToStringSerializer.instance);
-        objectMapper.registerModule(simpleModule);
-        return objectMapper;
-    }
 }
-

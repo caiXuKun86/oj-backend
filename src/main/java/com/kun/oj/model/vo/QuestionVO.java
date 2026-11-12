@@ -56,6 +56,20 @@ public class QuestionVO {
      */
     private String judgeCaseSample;
 
+    /**
+     * 判题用例 url/key
+     */
+    private String judgeCaseKey;
+
+    /**
+     * 判题用例 版本
+     */
+    private String judgeCaseVersion;
+
+    /**
+     * 判题用例 数量
+     */
+    private Integer judgeCaseCount;
 
     /**
      * 题目提交数
@@ -66,6 +80,5 @@ public class QuestionVO {
      * 题目通过数
      */
     private Integer acceptedNum;
-
 
 }

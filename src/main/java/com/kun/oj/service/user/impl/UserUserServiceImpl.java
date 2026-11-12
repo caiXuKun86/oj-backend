@@ -107,8 +107,7 @@ public class UserUserServiceImpl extends ServiceImpl<UserMapper, User> implement
         // 3. 记录用户的登录态
         String token = JwtUtils.createToken(user.getId(), user.getRole());
         String redisKey = String.format(RedisConstants.USER_LOGIN_TOKEN, user.getId());
-        stringRedisTemplate.opsForValue().set(redisKey, token);
-        stringRedisTemplate.expire(token, CommonConstants.EXPIRE_TIME, TimeUnit.MILLISECONDS);
+        stringRedisTemplate.opsForValue().set(redisKey, token, CommonConstants.EXPIRE_TIME, TimeUnit.MILLISECONDS);
         LoginUserVO loginUserVO = BeanUtil.copyProperties(user, LoginUserVO.class);
         loginUserVO.setToken(token);
         return loginUserVO;

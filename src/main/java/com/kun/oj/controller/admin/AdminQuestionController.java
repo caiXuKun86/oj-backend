@@ -41,7 +41,7 @@ public class AdminQuestionController {
      */
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     @GetMapping("/list")
-    public Result<PageResult<QuestionPageVO>> queryQuestionPage(@RequestBody AdminQuestionPageRequest questionPageRequest) {
+    public Result<PageResult<QuestionPageVO>> queryQuestionPage(AdminQuestionPageRequest questionPageRequest) {
         PageResult<QuestionPageVO> result = questionService.queryQuestionPage(questionPageRequest);
         return ResultUtils.success(result);
     }
@@ -64,6 +64,7 @@ public class AdminQuestionController {
 
     /**
      * 创建题目
+     *
      * @param questionAddRequest
      * @return
      */
@@ -83,8 +84,10 @@ public class AdminQuestionController {
         JudgeCaseUploadResponse response = questionService.uploadTestCases(multipartFile, questionId);
         return ResultUtils.success(response);
     }
+
     /**
      * 删除题目
+     *
      * @return
      */
     @DeleteMapping("/{questionId}")
@@ -97,6 +100,7 @@ public class AdminQuestionController {
 
     /**
      * 更新题目
+     *
      * @param questionUpdateRequest
      * @return
      */
@@ -104,15 +108,9 @@ public class AdminQuestionController {
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     public Result<Boolean> updateQuestion(@RequestBody QuestionUpdateRequest questionUpdateRequest, @PathVariable Long questionId) {
 
-        boolean result = questionService.updateQuestion(questionUpdateRequest,questionId);
+        boolean result = questionService.updateQuestion(questionUpdateRequest, questionId);
         return ResultUtils.success(result);
     }
-
-
-
-
-
-
 
 
 }
